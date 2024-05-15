@@ -13,11 +13,14 @@ import java.util.Random;
 public interface Constantes {
     int NFILAS = 7;
     int NCOLUMNAS = 5;
-    String BROKER_IP = "tcp://192.168.0.105:1883";
+    //String BROKER_IP = "tcp://192.168.0.105:1883";
+    String BROKER_IP = "tcp://192.168.0.152:1883";
+
     String CLIENT_ID = "GRUPO_S";
     String TOPIC_RECIBIR_MAPA = "map";
-    String TOPIC_RECIBIR_POSICION = "posicion";
+    String TOPIC_RECIBIR_POSICION = "GrupoS/posicion";
     String TOPIC_PUBLICAR_VIAJE = "GrupoS/viaje";
+    String TOPIC_RECIBIR_CONFIRMACION = "GrupoS/confirmarViaje";
     int QOS = 1;
     enum TipoImagen {
         PAQUETE, ENTREGA, CAMION;

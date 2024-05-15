@@ -11,6 +11,7 @@ import es.uja.iambiental.curso2324.gui.ListaEntregas;
 import static es.uja.iambiental.curso2324.utils.Constantes.BROKER_IP;
 import static es.uja.iambiental.curso2324.utils.Constantes.CLIENT_ID;
 import static es.uja.iambiental.curso2324.utils.Constantes.QOS;
+import static es.uja.iambiental.curso2324.utils.Constantes.TOPIC_RECIBIR_CONFIRMACION;
 import static es.uja.iambiental.curso2324.utils.Constantes.TOPIC_RECIBIR_MAPA;
 import static es.uja.iambiental.curso2324.utils.Constantes.TOPIC_RECIBIR_POSICION;
 import java.io.IOException;
@@ -31,6 +32,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class Lego {
 
     public static void main(String[] args) throws IOException, MqttException, InterruptedException {
+       /* PRUEBAS LOCAL
         String codigoCiudad = "0202000105"
                 + "0307050002"
                 + "0004110906"
@@ -46,8 +48,8 @@ public class Lego {
         while(true){
             Thread.sleep(1);
             //interfaz.camionero(aleatorio.nextInt(7), aleatorio.nextInt(5));
-        }
-/*
+        }*/
+
         System.out.println("HA INICIADO LA EJECUCIÓN");
         Interfaz[] interfaz = {null};
         boolean[] mapaCreado = {false};
@@ -58,6 +60,7 @@ public class Lego {
         MqttClient client = new MqttClient(BROKER_IP, CLIENT_ID);
         MqttConnectOptions options = new MqttConnectOptions();
         client.connect(options);
+        System.out.println("CONEXIÓN REALIZADA!");
 
         client.setCallback(new MqttCallback() {
             public void messageArrived(String topic, MqttMessage message) throws Exception {
@@ -65,19 +68,31 @@ public class Lego {
                 System.out.println("qos: " + message.getQos());
                 System.out.println("message content: " + new String(message.getPayload()));
 
-                if (topic.equals(TOPIC_RECIBIR_MAPA)) {
-                    if (!mapaCreado[0]) {
-                        System.out.println("RECIBE MAPA");
-                        mapaCiudad[0] = new String(message.getPayload());
-                        ciudad[0] = new Ciudad2(mapaCiudad[0]);
-                        ciudad[0].setVisible(true);
-                        mapaCreado[0] = true;
-                        interfaz[0] = new Interfaz(ciudad[0]);
-                        interfaz[0].setVisible(true);
-                        interfaz[0].setCliente(client);
-                    }
-                } else if (topic.equals(TOPIC_RECIBIR_POSICION)) {
-                    System.out.println("RECIBE POSICIÓN");
+                switch (topic) {
+                    case TOPIC_RECIBIR_MAPA:
+                        if (!mapaCreado[0]) {
+                            System.out.println("RECIBE MAPA");
+                            mapaCiudad[0] = new String(message.getPayload());
+                            ciudad[0] = new Ciudad2(mapaCiudad[0]);
+                            ciudad[0].setVisible(true);
+                            mapaCreado[0] = true;
+                            interfaz[0] = new Interfaz(ciudad[0]);
+                            interfaz[0].setVisible(true);
+                            interfaz[0].setCliente(client);
+                        }   break;
+                    case TOPIC_RECIBIR_POSICION:
+                        System.out.println("RECIBE POSICIÓN VÍA MQTT");
+                        //PINTA EL CAMIÓN DONDE TOCA
+                        String mensaje = new String(message.getPayload());
+                        String partes[] = mensaje.split(";");
+                        interfaz[0].camionero(Integer.parseInt(partes[0]), Integer.parseInt(partes[1]));
+                        break;
+                    case TOPIC_RECIBIR_CONFIRMACION:
+                        System.out.println("RECIBIMOS CONFIRMACIÓN ENTREGA");
+                        interfaz[0].recibirConfirmacion();
+                        break;
+                    default:
+                        break;
                 }
 
             }
@@ -93,7 +108,8 @@ public class Lego {
 
         client.subscribe(TOPIC_RECIBIR_MAPA, QOS);
         client.subscribe(TOPIC_RECIBIR_POSICION, QOS);
-*/
+        client.subscribe(TOPIC_RECIBIR_CONFIRMACION,QOS);
+
         //client.disconnect();
         //client.close();
     }

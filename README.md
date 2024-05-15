@@ -15,7 +15,7 @@ public interface Constantes {
     String TOPIC_RECIBIR_MAPA = "map";
     String TOPIC_RECIBIR_POSICION = "posicion";
     String TOPIC_PUBLICAR_VIAJE = "GrupoS/viaje";
-	...
+    ...
 }
 ```
 Para ponerla en marcha se observan varias alternativas:
@@ -24,6 +24,9 @@ Para ponerla en marcha se observan varias alternativas:
 
 ## Intefaz de Usuario
 Una vez la aplicación reciba por MQTT por medio del topic `TOPIC_RECIBIR_MAPA` la cadena de texto relativa a la estructura del mapa de dimensiones 7x5, la aplicación abrirá una interfaz para comenzar a comunicarse con el robot de reparto por medio del topic `TOPIC_PUBLICAR_VIAJE`. 
+
 ![](https://github.com/AlbertoHerreros/InteligenciaAmbiental/blob/main/img/interfaz.png?raw=true)
+
 Para marcar la ubicación de un paquete, se hará click izquierdo sobre una casilla que sea punto de entrega. Para marcar un destino se hará click derecho. Una vez tengamos ambos puntos marcados, bastará con pulsar el botón de confirmar y se hará el reparto.
+
 ![](https://github.com/AlbertoHerreros/InteligenciaAmbiental/blob/main/img/interfaz2.png?raw=true)

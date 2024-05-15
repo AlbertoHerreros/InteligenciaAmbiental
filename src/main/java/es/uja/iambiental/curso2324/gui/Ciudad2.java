@@ -36,7 +36,7 @@ public class Ciudad2 extends JPanel {
     private final int[][] matrizPiezas;
     private final ArrayList<pair> listaDestinos;
     private final ArrayList<pair> listaInicios;
-    
+
     private final Casilla[][] matrizCasillas;
     private final Boolean[][] matrizPuntosRecogida; //booleana, 1 si se puede, 0 si no
     private int xPaquete, xDestino, yPaquete, yDestino, xCamion, yCamion;
@@ -68,8 +68,6 @@ public class Ciudad2 extends JPanel {
         this.setSize(1000, 800);
         crearCiudad();
         determinarPuntosRecogida();
-        pair entrada = new pair(6, 0);
-        pair paquete = new pair(0, 3);
         floyd();
         listaDestinos = new ArrayList<>();
         listaInicios = new ArrayList<>();
@@ -77,8 +75,8 @@ public class Ciudad2 extends JPanel {
     }
 
     /**
-     * Algoritmo de floyd para calcular todos los caminos posibles entre vértices
-     * del grafo, es decir, entre pares de casillas
+     * Algoritmo de floyd para calcular todos los caminos posibles entre
+     * vértices del grafo, es decir, entre pares de casillas
      */
     private void floyd() {
         int NFC = NFILAS * NCOLUMNAS;
@@ -122,17 +120,16 @@ public class Ciudad2 extends JPanel {
                         matrizAdyacencia[posOtra][posActual] = 1;
                     }
                 }
-
             }
         }
 
-  /*      for (int i = 0; i < NFC; i++) {
+        /*      for (int i = 0; i < NFC; i++) {
             for (int j = 0; j < NFC; j++) {
                 System.out.print(matrizAdyacencia[i][j] + ",");
             }
             System.out.println("");
         }
-*/
+         */
         for (int i = 0; i < NFC; i++) {
             for (int j = 0; j < NFC; j++) {
                 if (i == j) {
@@ -166,48 +163,9 @@ public class Ciudad2 extends JPanel {
     }
 
     /**
-     * Algoritmo encargado de generar un camino entre 2 puntos
-     * @param interf
-     * @param i: inicio
-     * @param j: fin
+     *
+     * @throws IOException
      */
-    public void camino(int i, int j) {
-        int xIni = i / 5;
-        int xFin = j / 5;
-        int yIni = i % 5;
-        int yFin = j % 5;
-        System.out.println("CAMINO [" + xIni + "," + yIni + "]");
-        this.pintarCamion(xIni, yIni);
-        trayectoria(i, j);
-        System.out.println("CAMINO [" + xFin + "," + yFin + "]");
-        this.pintarCamion(xFin, yFin);
-
-    }
-
-    /**
-     * Algoritmo auxiliar para generar el camino entre 2 puntos desde camino()
-     * @param interf
-     * @param i: inicio
-     * @param j: fin
-     */
-    private void trayectoria(int i, int j) {
-        int k = matrizP[i][j];
-        if (k != 0) {
-            trayectoria(i, k);
-            int x = k / 5;
-            int y = k % 5;
-            System.out.println("Trayectoria: [" + x + "," + y + "]");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Ciudad2.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            pintarCamion(x, y);
-            this.getParent().repaint();
-            trayectoria(k, j);
-        }
-    }
-
     private void crearCiudad() throws IOException {
 
         this.removeAll();
@@ -244,8 +202,6 @@ public class Ciudad2 extends JPanel {
             button.setSize(128, 128);
             button.setBorder(null);
             button.setMargin(null);
-            
-
             button.addMouseListener(new MouseAdapter() {
 
                 @Override
@@ -379,7 +335,7 @@ public class Ciudad2 extends JPanel {
                 //Casilla antigua -> DEFAULT
                 Component c[] = this.getComponents();
                 JButton anterior = (JButton) c[xCamion * 5 + yCamion];
-               // System.out.println(anterior.getName());
+                // System.out.println(anterior.getName());
 
                 //Coger la imagen del paquete, de manera dinámica
                 BufferedImage imagenPulsada = null;
@@ -413,9 +369,10 @@ public class Ciudad2 extends JPanel {
 
     /**
      * Util para construir la interfaz
+     *
      * @param x
      * @param y
-     * @return 
+     * @return
      */
     private static GridBagConstraints createGbc(int x, int y) {
         GridBagConstraints gbc = new GridBagConstraints();
@@ -476,13 +433,16 @@ public class Ciudad2 extends JPanel {
                 System.out.print(matrizPuntosRecogida[i][j] + " ");
             }
             System.out.println("");
-
         }
-
     }
 
     public String obtenerPosCamion() {
-        return ""+xCamion+";"+yCamion+"";
+        return "" + xCamion + ";" + yCamion + "";
+    }
+
+    void setCoordenadasCamion(int xFin, int yFin) {
+        this.xCamion = xFin;
+        this.yCamion = yFin;
     }
 
 }

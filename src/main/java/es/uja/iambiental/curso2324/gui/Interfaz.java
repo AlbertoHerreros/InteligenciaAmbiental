@@ -4,12 +4,15 @@
  */
 package es.uja.iambiental.curso2324.gui;
 
+import es.uja.iambiental.curso2324.utils.Constantes;
 import es.uja.iambiental.curso2324.utils.pair;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 /**
  *
@@ -23,8 +26,11 @@ public class Interfaz extends javax.swing.JFrame {
     private final ArrayList<pair> listaFinales;
     private MqttClient clienteMQTT;
     private final Object lock = new Object();
+    
+    int trayectoriaActual = 0;
 
     private ArrayList<String> trayectorias;
+    private ArrayList<String> listaTrayectoriasEspera;
     int cont;
 
     /**
@@ -34,6 +40,7 @@ public class Interfaz extends javax.swing.JFrame {
      */
     public Interfaz(Ciudad2 ciudad) {
         initComponents();
+        listaTrayectoriasEspera = new ArrayList<>();
         this.ciudad = ciudad;
         this.setLayout(new FlowLayout(FlowLayout.LEFT));
         this.setSize(1000, ciudad.getHeight());
@@ -58,7 +65,7 @@ public class Interfaz extends javax.swing.JFrame {
      * @param i: inicio
      * @param j: fin
      */
-    public void camino(int i, int j,int numTrayecto) {
+    public void camino(int i, int j, int numTrayecto) {
 
         Thread thread = new Thread(() -> {
             synchronized (lock) {
@@ -68,7 +75,7 @@ public class Interfaz extends javax.swing.JFrame {
                 int yIni = i % 5;
                 int yFin = j % 5;
                 System.out.println("CAMINO [" + xIni + "," + yIni + "]");
-                this.camionero(xIni, yIni);
+                //this.camionero(xIni, yIni);
                 trayectorias.set(numTrayecto, trayectorias.get(numTrayecto) + "" + xIni + yIni + ",");
 
                 try {
@@ -83,7 +90,7 @@ public class Interfaz extends javax.swing.JFrame {
                 } catch (InterruptedException ex) {
                     Logger.getLogger(Interfaz.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                this.camionero(xFin, yFin);
+                this.ciudad.setCoordenadasCamion(xFin, yFin);
                 trayectorias.set(numTrayecto, trayectorias.get(numTrayecto) + "" + xFin + yFin);
                 cont++;
             }
@@ -100,10 +107,10 @@ public class Interfaz extends javax.swing.JFrame {
      * @param i: inicio
      * @param j: fin
      */
-    private void trayectoria(int i, int j,int numTrayecto) {
+    private void trayectoria(int i, int j, int numTrayecto) {
         int k = this.ciudad.getMatrizP()[i][j];
         if (k != 0) {
-            trayectoria(i, k,numTrayecto);
+            trayectoria(i, k, numTrayecto);
             int x = k / 5;
             int y = k % 5;
             System.out.println("Trayectoria: [" + x + "," + y + "]");
@@ -112,12 +119,18 @@ public class Interfaz extends javax.swing.JFrame {
             } catch (InterruptedException ex) {
                 Logger.getLogger(Ciudad2.class.getName()).log(Level.SEVERE, null, ex);
             }
-            this.camionero(x, y);
+            //this.camionero(x, y);
             trayectorias.set(numTrayecto, trayectorias.get(numTrayecto) + "" + x + y + ",");
             trayectoria(k, j, numTrayecto);
         }
     }
 
+    /**
+     * Función de pintado del camión
+     *
+     * @param i
+     * @param j
+     */
     public void camionero(int i, int j) {
         this.ciudad.pintarCamion(i, j);
         this.pack();
@@ -167,13 +180,15 @@ public class Interfaz extends javax.swing.JFrame {
     //Mandar camino a realizar
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 
+        //Limpiar trayectorias
         trayectorias.set(0, "");
         trayectorias.set(1, "");
-        
+
         String str = ciudad.confirmarPuntos();
         String camion = ciudad.obtenerPosCamion();
 
         if (!"".equals(str)) {
+            //Parsear puntos de recogida y entrega
             String partes[] = str.split(";");
             String partes1[] = partes[0].split(",");
             String partes2[] = partes[1].split(",");
@@ -190,25 +205,50 @@ public class Interfaz extends javax.swing.JFrame {
             System.out.println(str);
             this.listaEntregas.agregarEntrega(str);
 
+            //Coger pos camión
             String cam[] = camion.split(";");
             int xCamion = Integer.parseInt(cam[0]);
             int yCamion = Integer.parseInt(cam[1]);
-            
-            this.camino(xCamion * 5 + yCamion, xIni * 5 + yIni,0);
-            this.camino(xIni * 5 + yIni, xFin * 5 + yFin,1);
+            //Crear las trayectorias
+            this.camino(xCamion * 5 + yCamion, xIni * 5 + yIni, 0);
+            this.camino(xIni * 5 + yIni, xFin * 5 + yFin, 1);
+            //Espera ocupada
             while (cont != 2) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(Interfaz.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             cont = 0;
-            System.out.println("EL CAMINO A REALIZAR: " + trayectorias.get(0) + ";" + trayectorias.get(1));
+            //Camino camión -> paquete ; paquete -> entrega
+            String caminoTotal = trayectorias.get(0) + ";" + trayectorias.get(1);
+            System.out.println("EL CAMINO A REALIZAR: " + caminoTotal);
+            if(trayectoriaActual==0)
+                mandarCamino(caminoTotal);
+            else
+                listaTrayectoriasEspera.add(caminoTotal);
+            trayectoriaActual++;
         }
-
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    /**
+     * Recibe la confirmación de la entrega, así que mandamos el siguiente camino
+     */
+    public void recibirConfirmacion(){
+        System.out.println("metodo");
+        String ruta = listaTrayectoriasEspera.remove(0);
+        mandarCamino(ruta);
+    }
+    
+    private void mandarCamino(String caminoTotal) {
+        MqttMessage message = new MqttMessage(caminoTotal.getBytes());
+        try {
+            clienteMQTT.publish(Constantes.TOPIC_PUBLICAR_VIAJE, message);
+        } catch (MqttException ex) {
+            Logger.getLogger(Interfaz.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
     /**
      * @param args the command line arguments
      */
